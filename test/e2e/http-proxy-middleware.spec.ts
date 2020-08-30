@@ -19,8 +19,6 @@ describe('E2E http-proxy-middleware', () => {
       beforeEach(() => {
         isSkipped = false;
 
-        let middleware;
-
         const mockReq = { url: '/foo/bar', originalUrl: '/foo/bar' };
         const mockRes = {};
         const mockNext = () => {
@@ -28,10 +26,12 @@ describe('E2E http-proxy-middleware', () => {
           isSkipped = true;
         };
 
-        middleware = createProxyMiddleware('/api', {
+        const middleware = createProxyMiddleware('/api', {
           target: `http://localhost:8000`,
         });
-        middleware(mockReq, mockRes, mockNext);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        middleware(mockReq as any, mockRes as any, mockNext);
       });
 
       it('should not proxy requests when request url does not match context', () => {
