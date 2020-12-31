@@ -2,9 +2,9 @@ import * as express from 'express';
 
 export { createProxyMiddleware } from '../../dist/index';
 
-export function createApp(middleware) {
+export function createApp(...middleware) {
   const app = express();
-  app.use(middleware);
+  app.use(...middleware);
   return app;
 }
 

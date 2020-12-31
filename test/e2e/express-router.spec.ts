@@ -4,8 +4,8 @@ import { createProxyMiddleware } from './_utils';
 import { Options } from '../../src/index';
 
 describe('Usage in Express', () => {
-  let app;
-  let server;
+  let app: express.Express;
+  let server: http.Server;
 
   beforeEach(() => {
     app = express();

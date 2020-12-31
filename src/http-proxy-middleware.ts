@@ -1,6 +1,8 @@
 import * as express from 'express';
+import { ClientRequest } from 'http';
 import * as httpProxy from 'http-proxy';
 import * as _ from 'lodash';
+import * as querystring from 'querystring';
 import { createConfig } from './config-factory';
 import * as contextMatcher from './context-matcher';
 import * as handlers from './handlers';
@@ -32,6 +34,9 @@ export class HttpProxyMiddleware {
 
     // log errors for debug purpose
     this.proxy.on('error', this.logError);
+
+    // fix proxied body if bodyParser is involved
+    this.proxy.on('proxyReq', this.fixBody);
 
     // https://github.com/chimurai/http-proxy-middleware/issues/19
     // expose function to upgrade externally
@@ -173,5 +178,25 @@ export class HttpProxyMiddleware {
     const errReference = 'https://nodejs.org/api/errors.html#errors_common_system_errors'; // link to Node Common Systems Errors page
 
     this.logger.error(errorMessage, req.url, hostname, target, err.code || err, errReference);
+  };
+
+  private fixBody = (proxyReq: ClientRequest, req: Request) => {
+    if (!req.body || !Object.keys(req.body).length) {
+      return;
+    }
+
+    const contentType = proxyReq.getHeader('Content-Type') as string;
+    const writeBody = (bodyData: string) => {
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+      proxyReq.write(bodyData);
+    };
+
+    if (contentType.includes('application/json')) {
+      writeBody(JSON.stringify(req.body));
+    }
+
+    if (contentType === 'application/x-www-form-urlencoded') {
+      writeBody(querystring.stringify(req.body));
+    }
   };
 }
